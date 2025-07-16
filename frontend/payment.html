@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SKY RESERVE - Payment</title>
+  <style>
+    body {
+      background: url('Aeroplane.png') center/cover no-repeat fixed;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+    .navbar {
+      padding: 20px;
+      background: rgba(0,0,0,0.5);
+      text-align: right;
+    }
+    .navbar a {
+      color: #fff;
+      margin-left: 15px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .confirm-box {
+      padding: 20px;
+      max-width: 500px;
+      margin: 100px auto;
+      background: rgba(0,0,0,0.6);
+      border-radius: 10px;
+      color: #fff;
+    }
+    .confirm-box input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    .error-msg {
+      color: #ff6b6b;
+      font-size: 14px;
+      margin-bottom: 10px;
+      display: none;
+    }
+    .confirm-box button {
+      width: 100%;
+      padding: 10px;
+      background: #28a745;
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .confirm-box button:hover {
+      background: #218838;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <a href="index.html">Home</a>
+    <a href="search.html">Flight Search</a>
+    <a href="payment.html">Payment</a>
+  </div>
+
+  <div class="confirm-box">
+    <h2>Confirm Your Flight</h2>
+    <div id="flight-info"></div>
+    <h3>Passenger Details</h3>
+
+    <input id="name" name="name" type="text" placeholder="Full Name"
+           pattern="[A-Za-z\s]+" required
+           title="Only letters and spaces allowed"/>
+    <div id="name-error" class="error-msg">Name must contain only letters and spaces.</div>
+
+    <input id="email" name="email" type="email" placeholder="Email"
+           required title="name@example.com"/>
+    <div id="email-error" class="error-msg">Please enter a valid email address.</div>
+
+    <input id="phone" name="phone" type="tel" placeholder="Phone (10 digits)"
+           pattern="\d{10}" maxlength="10" required title="Exactly 10 digits"/>
+    <div id="phone-error" class="error-msg">Phone number must be exactly 10 digits.</div>
+
+    <button id="book-btn">Book Now</button>
+  </div>
+
+  <script>
+    const qs = new URLSearchParams(location.search);
+    document.getElementById('flight-info').innerHTML = `
+      <p><strong>${qs.get('flightNumber')}</strong></p>
+      <p>${qs.get('origin')} → ${qs.get('destination')}</p>
+      <p>Date: ${qs.get('date')}</p>
+      <p>Passengers: ${qs.get('passengers')}</p>
+      <p>Price: ₹${qs.get('price')}</p>
+    `;
+
+    document.getElementById('book-btn').addEventListener('click', () => {
+      // Get elements and values
+      const nameEl = document.getElementById('name');
+      const emailEl = document.getElementById('email');
+      const phoneEl = document.getElementById('phone');
+
+      const nameErr = document.getElementById('name-error');
+      const emailErr = document.getElementById('email-error');
+      const phoneErr = document.getElementById('phone-error');
+
+      // Hide previous errors
+      [nameErr, emailErr, phoneErr].forEach(el => el.style.display = 'none');
+
+      const name = nameEl.value.trim();
+      const email = emailEl.value.trim();
+      const phone = phoneEl.value.trim();
+
+      const namePattern = /^[A-Za-z\s]+$/;
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const phonePattern = /^\d{10}$/;
+
+      let valid = true;
+
+      if (!namePattern.test(name)) {
+        nameErr.style.display = 'block';
+        valid = false;
+      }
+      if (!emailPattern.test(email)) {
+        emailErr.style.display = 'block';
+        valid = false;
+      }
+      if (!phonePattern.test(phone)) {
+        phoneErr.style.display = 'block';
+        valid = false;
+      }
+
+      if (!valid) return;
+
+      alert(`Booked! \n${name}, your flight is confirmed.\nWe have emailed you at ${email}`);
+    });
+  </script>
+</body>
+</html>

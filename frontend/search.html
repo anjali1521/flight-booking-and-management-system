@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SKY RESERVE - Flight Search</title>
+  <style>
+    body, html { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body {
+      background: url('photo.jpg') center/cover no-repeat fixed;
+      color: #fff;
+    }
+    .logo{
+        text-align: left;
+        justify-content: left;
+        color:rgb(236, 236, 226);
+        font-size: 2.0rem;
+        padding:20px;
+        border-radius: 5px;
+      border: 1px solid #fca6f5;
+        
+    }
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      padding: 30px;
+      display: flex;
+      justify-content: flex-end;
+      background: rgba(0,0,0,0.5);
+    
+    }
+    .navbar a {
+      color: #fff;
+      text-decoration: none;
+      margin-left: 15px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 5px;
+      transition: 0.3s;
+    }
+    .navbar a:hover {
+      background: rgba(255,255,255,0.8);
+      
+    }
+    .main-content {
+      padding: 100px 20px 20px; /* Push content below navbar */
+    }
+   
+    .search-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 45px;
+      background: rgba(0,0,0,0.7);
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .search-container input,
+    .search-container select,
+    .search-container button {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .search-container button {
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .search-container button:hover {
+      background-color: #218838;}
+   
+    /* 🍃 Autocomplete dropdown styling */
+    .autocomplete-container { position: relative; }
+    .autocomplete-items {
+      position: absolute;
+      background: rgba(165, 149, 149, 0.9);
+      width: 100%;
+      max-height: 150px;
+      overflow-y: auto;
+      border-radius: 4px;
+    }
+    .autocomplete-items div {
+      padding: 8px;
+      cursor: pointer;
+    }
+    .autocomplete-items div:hover { background: rgba(0,0,0,0.2); }
+
+    .flights-list { display:grid; gap:20px; padding:0 20px 40px; }
+    .flight-card { background:rgba(0,0,0,0.7); padding:20px; border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,0.3);}
+    .flight-info { margin-bottom:15px; }
+    .flight-price { display:flex; justify-content:space-between; align-items:center; }
+    .flight-price button { padding:10px 15px; background-color:#007bff; border:none; border-radius:5px; color:#fff; cursor:pointer;transition:background-color 0.3s;}
+    .flight-price button:hover { background-color:#0056b3; }
+    @media(max-width:768px){ .flight-card { flex-direction:column; } }
+  </style>
+</head>
+<body>
+  <div class="logo"><b>✈SEARCH FLIGHTS</b></div>
+  <nav class="navbar">
+    <a href="index.html">Home</a>
+    <a href="search.html">Flight Search</a>
+    <a href="payment.html">Payment</a>
+  </nav>
+
+  <div class="main-content">
+    <div class="search-container">
+      <div class="autocomplete-container">
+        <input id="origin" placeholder="From (City e.g. Mumbai)" autocomplete="off">
+        <div id="origin-list" class="autocomplete-items"></div>
+      </div>
+      <div class="autocomplete-container">
+        <input id="destination" placeholder="To (City e.g. Chennai)" autocomplete="off">
+        <div id="destination-list" class="autocomplete-items"></div>
+      </div>
+      <input id="date" type="date">
+      <select id="passengers">
+        <option value="1">1 Passenger</option>
+        <option value="2">2 Passengers</option>
+        <option value="3">3 Passengers</option>
+        <option value="4">4 Passengers</option>
+      </select>
+      <button id="search-btn">Search Flights</button>
+    </div>
+    <div id="flights-container" class="flights-list"></div>
+  </div>
+
+  <!-- Fuse.js for fuzzy search autocomplete -->
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
+  <script>
+    // Extract unique city names from your flight data
+    const cities = ["Mumbai","Chennai","Kolkata","Delhi","Bangalore","Hyderabad"];
+    const fuse = new Fuse(cities, { threshold: 0.3, ignoreLocation: true }); // typo-tolerant thanks to Fuse.js :contentReference[oaicite:1]{index=1}
+
+    function setupAuto(inputId, listId) {
+      const inp = document.getElementById(inputId);
+      const list = document.getElementById(listId);
+
+      inp.addEventListener('input', () => {
+        const val = inp.value.trim();
+        list.innerHTML = '';
+        if (!val) return;
+
+        fuse.search(val).slice(0,5).forEach(res => {
+          const div = document.createElement('div');
+          div.textContent = res.item;
+          div.onclick = () => {
+            inp.value = res.item;
+            list.innerHTML = '';
+          };
+          list.appendChild(div);
+        });
+      });
+
+      document.addEventListener('click', e => {
+        if (!e.target.closest(`#${inputId}`)) list.innerHTML = '';
+      });
+    }
+
+    setupAuto('origin', 'origin-list');
+    setupAuto('destination', 'destination-list');
+
+    document.getElementById('search-btn').addEventListener('click', async () => {
+      const origin = document.getElementById('origin').value.trim();
+      const destination = document.getElementById('destination').value.trim();
+      const date = document.getElementById('date').value;
+      const passengers = +document.getElementById('passengers').value;
+
+      if (!origin || !destination || !date) {
+        return alert('Please fill in all fields.');
+      }
+      if (date < new Date().toISOString().split('T')[0]) {
+        return alert('Choose a future date.');
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/api/flights');
+        const flights = await res.json();
+
+        const matches = flights.filter(f =>
+          f.Origin === origin &&
+          f.Destination === destination &&
+          f['Departure Time'].startsWith(date)
+        );
+
+        const container = document.getElementById('flights-container');
+        container.innerHTML = matches.length
+          ? ''
+          : '<p style="text-align:center;">No flights found.</p>';
+
+        matches.forEach(f => {
+          const dep = new Date(f['Departure Time']);
+          const arr = new Date(f['Arrival Time']);
+          const total = f.Price * passengers;
+          const card = document.createElement('div');
+          card.className = 'flight-card';
+          card.innerHTML = `
+            <div class="flight-info">
+              <h3>${f['Flight Number']}</h3>
+              <p>${f.Origin} → ${f.Destination}</p>
+              <p>${dep.toLocaleString()}</p>
+              <p>${arr.toLocaleString()}</p>
+            </div>
+            <div class="flight-price">
+              <strong>₹${total.toFixed(2)}</strong>
+              <button>Book Now</button>
+            </div>
+          `;
+          card.querySelector('button').onclick = () => {
+            const params = new URLSearchParams({
+              flightNumber: f['Flight Number'],
+              origin: f.Origin,
+              destination: f.Destination,
+              date,
+              passengers: passengers.toString(),
+              price: total.toString()
+            });
+            window.location.href = 'payment.html?' + params;
+          };
+          container.appendChild(card);
+        });
+      } catch (err) {
+        alert('Error fetching flights: ' + err);
+      }
+    });
+  </script>
+</body>
+</html>
